@@ -1,0 +1,5 @@
+module.exports = {
+    PORT: 8081,
+    SSL_KEY: '/etc/nginx/ssl/nginx.key',
+    SSL_CERT: '/etc/nginx/ssl/nginx.crt'
+};
