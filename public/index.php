@@ -30,9 +30,37 @@ body {
     max-width: 980px;
     height: 100%;
     margin: 0 auto;
-    color: #111;
+    color: #fff;
     line-height: 1.3em;
     background: #222;
+}
+
+.clickable, .clickable * {
+    cursor: pointer;
+}
+.selectable {
+    -moz-user-select: text;
+    -webkit-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+    cursor: text;
+}
+
+/* Call button(s) */
+footer {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    padding: 20px 10px;
+    text-align: center;
+    box-sizing: border-box;
+}
+footer #call {
+    border: none;
+    background: transparent;
+}
+footer #call svg {
+    fill: #fff;
 }
 
 /* WebRTC videochat */
@@ -52,14 +80,18 @@ main #localVideo {
 <title></title>
 
 <body>
-    <header>
-        <button id="call" type="button">anrufen</button>
-    </header>
-
     <main>
         <video id="remoteVideo" autoplay></video>
         <video id="localVideo" autoplay muted></video>
     </main>
+
+    <footer>
+        <button id="call" class="clickable" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60px" height="60px" viewBox="0 0 24 24">
+                <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
+            </svg>
+        </button>
+    </footer>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
