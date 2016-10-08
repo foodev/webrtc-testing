@@ -56,12 +56,16 @@ footer {
     text-align: center;
     box-sizing: border-box;
 }
-footer #call {
+footer #call,
+footer #hang-up {
     border: none;
     background: transparent;
 }
 footer #call svg {
-    fill: #fff;
+    fill: #0f0;
+}
+footer #hang-up svg {
+    fill: #f00;
 }
 
 /* WebRTC videochat */
@@ -93,6 +97,22 @@ main #localVideo {
             </svg>
         </button>
     </footer>
+
+    <template id="pre-call">
+        <button id="call" class="clickable" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60px" height="60px" viewBox="0 0 24 24">
+                <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
+            </svg>
+        </button>
+    </template>
+
+    <template id="in-call">
+        <button id="hang-up" class="clickable" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60px" height="60px" viewBox="0 0 24 24">
+                <path d="M18.48 22.926l-1.193.658c-6.979 3.621-19.082-17.494-12.279-21.484l1.145-.637 3.714 6.467-1.139.632c-2.067 1.245 2.76 9.707 4.879 8.545l1.162-.642 3.711 6.461zm-9.808-22.926l-1.68.975 3.714 6.466 1.681-.975-3.715-6.466zm8.613 14.997l-1.68.975 3.714 6.467 1.681-.975-3.715-6.467z"/>
+            </svg>
+        </button>
+    </template>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
@@ -169,6 +189,14 @@ main #localVideo {
 
             // #7 Send our answer to the caller via our signaling server
             ourchatService.send(JSON.stringify(callAnswer));
+        }).then(function() {
+            // Show "in-call" buttons
+            var inCallButtons = document.querySelector('#in-call');
+
+            document.querySelector('footer').innerHTML = '';
+            document.querySelector('footer').appendChild(document.importNode(inCallButtons.content, true));
+
+            document.querySelector('#hang-up').onclick = hangUp;
         });
     };
 
@@ -177,7 +205,34 @@ main #localVideo {
         console.log('#8 Save the answer from callee:', data.sdp);
 
         // #8 Save the answer from callee
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp)).then(function() {
+            // Show "in-call" buttons
+            var inCallButtons = document.querySelector('#in-call');
+
+            document.querySelector('footer').innerHTML = '';
+            document.querySelector('footer').appendChild(document.importNode(inCallButtons.content, true));
+
+            document.querySelector('#hang-up').onclick = hangUp;
+        });
+    };
+
+    // End the current call
+    var hangUp = function() {
+        // Close the connection
+        peerConnection.close();
+
+        // Stop the audio and video streams
+
+        document.querySelector('#remoteVideo').src = '';
+        document.querySelector('#localVideo').src = '';
+
+        // Show "pre-call" buttons
+        var preCallButtons = document.querySelector('#pre-call');
+
+        document.querySelector('footer').innerHTML = '';
+        document.querySelector('footer').appendChild(document.importNode(preCallButtons.content, true));
+
+        document.querySelector('#call').onclick = call;
     };
 
     var showLocalMediaStream = function(localMediaStream) {
@@ -228,7 +283,17 @@ main #localVideo {
 
             ourchatService.send(JSON.stringify(iceCandidate));
         }
-    }
+    };
+
+    // Something with the connection has changed
+    peerConnection.oniceconnectionstatechange = function() {
+        switch (peerConnection.iceConnectionState) {
+            case 'failed':
+            case 'disconnect':
+                hangUp();
+                break;
+        }
+    };
 
     // Incoming call
     ourchatService.addEventListener('message', function(event) {
