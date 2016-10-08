@@ -50,6 +50,7 @@ body {
 footer {
     position: fixed;
     width: 100%;
+    max-width: 980px;
     bottom: 0;
     padding: 20px 10px;
     text-align: center;
