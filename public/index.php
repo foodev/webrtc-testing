@@ -138,13 +138,7 @@ main #localVideo {
 
     // Call the friend
     var call = function() {
-        // Request to use the webcam and microphone from the client
-        navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: {
-                facingMode: 'user'
-            }
-        }).then(function(localMediaStream) {
+        requestLocalMediaStream().then(function(localMediaStream) {
             showLocalMediaStream(localMediaStream);
 
             // Add audio and video streams (aka "tracks") to our peer connection
@@ -159,15 +153,9 @@ main #localVideo {
         console.log('#4 Save the incoming offer:', data.sdp);
 
         // #4 Save the incoming offer
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp)).then(function() {
-            // Request to use the webcam and microphone from the client
-            return navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: true/*{
-                    facingMode: 'user'
-                }*/
-            });
-        }).then(function(localMediaStream) {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+        .then(requestLocalMediaStream)
+        .then(function(localMediaStream) {
             showLocalMediaStream(localMediaStream);
 
             // Add audio and video streams (aka "tracks") to our peer connection
@@ -224,13 +212,17 @@ main #localVideo {
 
     // End the current call
     var hangUp = function() {
-        // Close the connection
-        peerConnection.close();
-
         // Stop the audio and video streams
+        for (var sender of peerConnection.getSenders()) {
+            sender.track.stop();
+            peerConnection.removeTrack(sender);
+        }
 
         document.querySelector('#remoteVideo').src = '';
         document.querySelector('#localVideo').src = '';
+
+        // Close the connection
+        peerConnection.close();
 
         // Show "pre-call" buttons
         var preCallButtons = document.querySelector('#pre-call');
@@ -243,6 +235,16 @@ main #localVideo {
 
     var showLocalMediaStream = function(localMediaStream) {
         document.querySelector('#localVideo').src = URL.createObjectURL(localMediaStream);
+    };
+
+    var requestLocalMediaStream = function() {
+        // Request to use the webcam and microphone from the client
+        return navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true/*{
+                facingMode: 'user'
+            }*/
+        })
     };
 
     // Connection initialization starts
