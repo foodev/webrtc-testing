@@ -2,7 +2,7 @@
 require '../config/client.php';
 
 $username = $_GET['username'];
-$callee = $_GET['callee'];
+$friend = $_GET['friend'];
 ?>
 <!doctype html>
 <meta charset="utf-8">
@@ -175,7 +175,7 @@ main #localVideo {
         }).then(function() {
             var callAnswer = {
                 type: 'call-answer',
-                callee: '<?=$callee?>',
+                friend: '<?=$friend?>',
                 sdp: peerConnection.localDescription
             };
 
@@ -194,11 +194,11 @@ main #localVideo {
         });
     };
 
-    // Process answer from callee
+    // Process answer from friend
     var processAnswer = function(data) {
-        console.log('#8 Save the answer from callee:', data.sdp);
+        console.log('#8 Save the answer from friend:', data.sdp);
 
-        // #8 Save the answer from callee
+        // #8 Save the answer from friend
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp)).then(function() {
             // Show "in-call" buttons
             var inCallButtons = document.querySelector('#in-call');
@@ -251,7 +251,7 @@ main #localVideo {
     peerConnection.onnegotiationneeded = function() {
         console.log('#1 Creating a new offer.');
 
-        // #1 We create an offer which will be send to the callee
+        // #1 We create an offer which will be send to the friend
         peerConnection.createOffer().then(function(offer) {
             console.log('#2 Save our offer:', offer);
 
@@ -260,13 +260,13 @@ main #localVideo {
         }).then(function() {
             var callOffer = {
                 type: 'call-offer',
-                callee: '<?=$callee?>',
+                friend: '<?=$friend?>',
                 sdp: peerConnection.localDescription
             };
 
-            console.log('#3 Send the offer to callee:', callOffer);
+            console.log('#3 Send the offer to friend:', callOffer);
 
-            // #3 Send the offer to callee via our signaling server
+            // #3 Send the offer to friend via our signaling server
             ourchatService.send(JSON.stringify(callOffer));
         });
     };
@@ -276,18 +276,18 @@ main #localVideo {
         document.querySelector('#remoteVideo').src = URL.createObjectURL(event.streams[0]);
     };
 
-    // Send ICE candidate to callee
+    // Send ICE candidate to friend
     peerConnection.onicecandidate = function(event) {
         if (event.candidate) {
             console.log('Got ICE candidate:', event.candidate.candidate);
 
             var iceCandidate = {
                 type: 'ice-candidate',
-                callee: '<?=$callee?>',
+                friend: '<?=$friend?>',
                 sdp: event.candidate
             };
 
-            console.log('Send ICE candidate to callee:', iceCandidate);
+            console.log('Send ICE candidate to friend:', iceCandidate);
 
             ourchatService.send(JSON.stringify(iceCandidate));
         }

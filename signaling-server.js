@@ -35,9 +35,9 @@ wss.on('connection', function(client) {
     client.on('message', function(websocketData) {
         let data = JSON.parse(websocketData);
 
-        if (typeof clients[data.callee] != 'undefined') {
-            console.log('Forward message to ' + data.callee);
-            clients[data.callee].send(JSON.stringify(data));
+        if (typeof clients[data.friend] != 'undefined') {
+            console.log('Forward message to ' + data.friend);
+            clients[data.friend].send(JSON.stringify(data));
         }
     });
 
