@@ -321,6 +321,8 @@ main #localVideo {
         var data = JSON.parse(event.data);
 
         if (data.type == 'ice-candidate') {
+            console.log('Add ICE candidate:', data.sdp);
+
             peerConnection.addIceCandidate(new RTCIceCandidate(data.sdp));
         }
     }, false);
