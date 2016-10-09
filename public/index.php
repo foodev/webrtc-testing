@@ -134,7 +134,7 @@ main #localVideo {
     });
 
     // This is our signaling server, used to exchange the offer and answer to establish the connection
-    var ourchatService = new WebSocket('<?=WEBSOCKET_SERVICE?>?username=<?=$username?>');
+    var signalingServer = new WebSocket('<?=WEBSOCKET_SERVICE?>?username=<?=$username?>');
 
     // Call the friend
     var call = function() {
@@ -182,7 +182,7 @@ main #localVideo {
             console.log('#7 Send the answer to the caller:', callAnswer);
 
             // #7 Send our answer to the caller via our signaling server
-            ourchatService.send(JSON.stringify(callAnswer));
+            signalingServer.send(JSON.stringify(callAnswer));
         }).then(function() {
             // Show "in-call" buttons
             var inCallButtons = document.querySelector('#in-call');
@@ -267,7 +267,7 @@ main #localVideo {
             console.log('#3 Send the offer to friend:', callOffer);
 
             // #3 Send the offer to friend via our signaling server
-            ourchatService.send(JSON.stringify(callOffer));
+            signalingServer.send(JSON.stringify(callOffer));
         });
     };
 
@@ -289,7 +289,7 @@ main #localVideo {
 
             console.log('Send ICE candidate to friend:', iceCandidate);
 
-            ourchatService.send(JSON.stringify(iceCandidate));
+            signalingServer.send(JSON.stringify(iceCandidate));
         }
     };
 
@@ -304,7 +304,7 @@ main #localVideo {
     };
 
     // Incoming call
-    ourchatService.addEventListener('message', function(event) {
+    signalingServer.addEventListener('message', function(event) {
         var data = JSON.parse(event.data);
 
         if (data.type == 'call-offer') {
@@ -316,7 +316,7 @@ main #localVideo {
     }, false);
 
     // Answer of call request
-    ourchatService.addEventListener('message', function(event) {
+    signalingServer.addEventListener('message', function(event) {
         var data = JSON.parse(event.data);
 
         if (data.type == 'call-answer') {
@@ -325,7 +325,7 @@ main #localVideo {
     }, false);
 
     // Add ICE candidate
-    ourchatService.addEventListener('message', function(event) {
+    signalingServer.addEventListener('message', function(event) {
         var data = JSON.parse(event.data);
 
         if (data.type == 'ice-candidate') {
