@@ -35,9 +35,13 @@ wss.on('connection', function(client) {
     client.on('message', function(websocketData) {
         let data = JSON.parse(websocketData);
 
+        console.log('Trying to forward message to ' + data.friend);
+
         if (typeof clients[data.friend] != 'undefined') {
-            console.log('Forward message to ' + data.friend);
             clients[data.friend].send(JSON.stringify(data));
+            console.log('Forwarded message to ' + data.friend);
+        } else {
+            console.log('FAILED to forward message to ' + data.friend);
         }
     });
 
