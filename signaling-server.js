@@ -39,7 +39,9 @@ wss.on('connection', function(client) {
 
         console.log('Trying to forward message to ' + data.friend);
 
-        if (typeof clients[data.friend] != 'undefined') {
+        if (typeof clients[data.friend] != 'undefined'
+            && clients[data.friend].readyState == clients[data.friend].OPEN
+        ) {
             clients[data.friend].send(JSON.stringify(data));
             console.log('Forwarded message to ' + data.friend);
         } else {
