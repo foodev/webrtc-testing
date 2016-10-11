@@ -149,7 +149,7 @@ main #localVideo {
 
     // Accept incoming call
     var acceptCall = function(data) {
-        console.log('#4 Save the incoming offer:', data.sdp);
+        console.log('Incoming call from %s.', data.friend);
 
         // #4 Save the incoming offer
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
@@ -162,12 +162,12 @@ main #localVideo {
                 peerConnection.addTrack(track, localMediaStream);
             }
         }).then(function() {
-            console.log('#5 Creating our answer.');
+            console.log('Creating our answer.');
 
             // #5 Create an answer for the offer
             return peerConnection.createAnswer();
         }).then(function(answer) {
-            console.log('#6 Save our own answer:', answer);
+            console.log('Save our own answer.');
 
             // #6 Save our own answer
             return peerConnection.setLocalDescription(answer);
@@ -178,7 +178,7 @@ main #localVideo {
                 sdp: peerConnection.localDescription
             };
 
-            console.log('#7 Send the answer to the caller:', callAnswer);
+            console.log('Send the answer to the friend.');
 
             // #7 Send our answer to the caller via our signaling server
             signalingServer.send(JSON.stringify(callAnswer));
@@ -195,7 +195,7 @@ main #localVideo {
 
     // Process answer from friend
     var processAnswer = function(data) {
-        console.log('#8 Save the answer from friend:', data.sdp);
+        console.log('The friend accepted our call.');
 
         // #8 Save the answer from friend
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp)).then(function() {
@@ -232,34 +232,47 @@ main #localVideo {
         document.querySelector('#call').onclick = call;
     };
 
-    // Show local video stream to the user
+    // Request to use the webcam and microphone from the client
+    var requestLocalMediaStream = function() {
+        return new Promise(function(resolve, reject) {
+            navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    facingMode: 'user'
+                }
+            }).then(function(localMediaStream) {
+                console.log('User granted access to own webcam and microphone. :)');
+
+                resolve(localMediaStream);
+            }).catch(function(mediaStreamError) {
+                if (mediaStreamError.name == 'NotAllowedError') {
+                    console.log('Access to own webcam and microphone DENIED by user. :(');
+                }
+            });
+        })
+    };
+
+    // Show own video stream to the user
     var showLocalMediaStream = function(localMediaStream) {
         console.log('Show local video stream to the user.');
 
         document.querySelector('#localVideo').src = URL.createObjectURL(localMediaStream);
     };
 
-    // Request to use the webcam and microphone from the client
-    var requestLocalMediaStream = function() {
-        return navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: {
-                facingMode: 'user'
-            }
-        }).then(function(localMediaStream) {
-            console.log('User granted access to webcam and microphone.');
+    // Show audio/video stream from the friend to the user
+    var showRemoteMediaStream = function(remoteMediaStream) {
+        console.log('Show audio/video stream from the friend to the user.');
 
-            return localMediaStream;
-        });
+        document.querySelector('#remoteVideo').src = URL.createObjectURL(remoteMediaStream);
     };
 
     // Connection initialization starts
     peerConnection.onnegotiationneeded = function() {
-        console.log('#1 Creating a new offer.');
+        console.log('Start to establish the connection to the friend.');
 
         // #1 We create an offer which will be send to the friend
         peerConnection.createOffer().then(function(offer) {
-            console.log('#2 Save our offer:', offer);
+            console.log('Created and save a new offer.');
 
             // #2 Save the own offer
             return peerConnection.setLocalDescription(offer);
@@ -270,7 +283,7 @@ main #localVideo {
                 sdp: peerConnection.localDescription
             };
 
-            console.log('#3 Send the offer to friend:', callOffer);
+            console.log('Send our offer to the friend.');
 
             // #3 Send the offer to friend via our signaling server
             signalingServer.send(JSON.stringify(callOffer));
@@ -279,7 +292,7 @@ main #localVideo {
 
     // Show video stream of the remote webcam
     peerConnection.ontrack = function(event) {
-        document.querySelector('#remoteVideo').src = URL.createObjectURL(event.streams[0]);
+        showRemoteMediaStream(event.streams[0]);
     };
 
     // Send ICE candidate to friend
@@ -292,8 +305,6 @@ main #localVideo {
                 friend: '<?=$friend?>',
                 sdp: event.candidate
             };
-
-            console.log('Send ICE candidate to friend:', iceCandidate);
 
             signalingServer.send(JSON.stringify(iceCandidate));
         }
@@ -335,7 +346,7 @@ main #localVideo {
         var data = JSON.parse(event.data);
 
         if (data.type == 'ice-candidate') {
-            console.log('Add ICE candidate:', data.sdp);
+            console.log('Add ICE candidate:', data.sdp.candidate);
 
             peerConnection.addIceCandidate(new RTCIceCandidate(data.sdp));
         }
