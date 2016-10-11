@@ -119,21 +119,39 @@ main #localVideo {
     'use strict';
 
     // This is our main connection object
-    var peerConnection = new RTCPeerConnection({
-        iceServers: [{
-            urls: 'stun:stun.stunprotocol.org:3478'
-        }, {
-            urls: [
-                'turn:74.125.140.127:19305?transport=udp',
-                'turn:74.125.140.127:443?transport=tcp'
-            ],
-            username: 'CNDY+b8FEgYsaLm0gUEYzc/s6OMT',
-            credential: 'tIa/HLcngA56/b4wUytljTXtpMg='
-        }]
-    });
+    var peerConnection;
 
     // This is our signaling server, used to exchange the offer and answer to establish the connection
     var signalingServer = new WebSocket('<?=WEBSOCKET_SERVICE?>?username=<?=$username?>');
+
+    var init = function() {
+        // This is our main connection object
+        peerConnection = new RTCPeerConnection({
+            iceServers: [{
+                urls: 'stun:stun.stunprotocol.org:3478'
+            }, {
+                urls: [
+                    'turn:74.125.140.127:19305?transport=udp',
+                    'turn:74.125.140.127:443?transport=tcp'
+                ],
+                username: 'CNDY+b8FEgYsaLm0gUEYzc/s6OMT',
+                credential: 'tIa/HLcngA56/b4wUytljTXtpMg='
+            }]
+        });
+
+        peerConnection.onnegotiationneeded = onnegotiationneededHandler;
+        peerConnection.ontrack = ontrackHandler;
+        peerConnection.onicecandidate = onicecandidateHandler;
+        peerConnection.oniceconnectionstatechange = oniceconnectionstatechangeHandler;
+
+        // Show "pre-call" buttons
+        var preCallButtons = document.querySelector('#pre-call');
+
+        document.querySelector('footer').innerHTML = '';
+        document.querySelector('footer').appendChild(document.importNode(preCallButtons.content, true));
+
+        document.querySelector('#call').onclick = call;
+    };
 
     // Call the friend
     var call = function() {
@@ -189,7 +207,9 @@ main #localVideo {
             document.querySelector('footer').innerHTML = '';
             document.querySelector('footer').appendChild(document.importNode(inCallButtons.content, true));
 
-            document.querySelector('#hang-up').onclick = hangUp;
+            document.querySelector('#hang-up').onclick = function() {
+                hangUpRequest().then(hangUp);
+            };
         });
     };
 
@@ -205,31 +225,49 @@ main #localVideo {
             document.querySelector('footer').innerHTML = '';
             document.querySelector('footer').appendChild(document.importNode(inCallButtons.content, true));
 
-            document.querySelector('#hang-up').onclick = hangUp;
+            document.querySelector('#hang-up').onclick = function() {
+                hangUpRequest().then(hangUp);
+            };
+        });
+    };
+
+    // Inform friend, that we want to end the call
+    var hangUpRequest = function() {
+        return new Promise(function(resolve, reject) {
+            console.log('Inform friend that we want to end the call.');
+
+            // Inform friend that we want to end the call
+            var hangUpInfo = {
+                type: 'call-ended',
+                friend: '<?=$friend?>'
+            };
+            signalingServer.send(JSON.stringify(hangUpInfo));
+
+            resolve();
         });
     };
 
     // End the current call
     var hangUp = function() {
+        console.log('We\'re going to end the call...');
+
         // Stop the audio and video streams
+        console.log('Stop and remove the own audio and video streams.');
+
+        document.querySelector('#localVideo').src = '';
+        document.querySelector('#remoteVideo').src = '';
+
         for (var sender of peerConnection.getSenders()) {
             sender.track.stop();
             peerConnection.removeTrack(sender);
         }
 
-        document.querySelector('#remoteVideo').src = '';
-        document.querySelector('#localVideo').src = '';
-
         // Close the connection
         peerConnection.close();
 
-        // Show "pre-call" buttons
-        var preCallButtons = document.querySelector('#pre-call');
+        console.log('Revert everything to the default values so we can make another call.');
 
-        document.querySelector('footer').innerHTML = '';
-        document.querySelector('footer').appendChild(document.importNode(preCallButtons.content, true));
-
-        document.querySelector('#call').onclick = call;
+        init();
     };
 
     // Request to use the webcam and microphone from the client
@@ -267,7 +305,7 @@ main #localVideo {
     };
 
     // Connection initialization starts
-    peerConnection.onnegotiationneeded = function() {
+    var onnegotiationneededHandler = function() {
         console.log('Start to establish the connection to the friend.');
 
         // #1 We create an offer which will be send to the friend
@@ -291,12 +329,12 @@ main #localVideo {
     };
 
     // Show video stream of the remote webcam
-    peerConnection.ontrack = function(event) {
+    var ontrackHandler = function(event) {
         showRemoteMediaStream(event.streams[0]);
     };
 
     // Send ICE candidate to friend
-    peerConnection.onicecandidate = function(event) {
+    var onicecandidateHandler = function(event) {
         if (event.candidate) {
             console.log('Got ICE candidate:', event.candidate.candidate);
 
@@ -311,11 +349,15 @@ main #localVideo {
     };
 
     // Something with the connection has changed
-    peerConnection.oniceconnectionstatechange = function() {
+    var oniceconnectionstatechangeHandler = function() {
         switch (peerConnection.iceConnectionState) {
             case 'failed':
             case 'disconnect':
                 hangUp();
+                break;
+
+            case 'connected':
+                console.log('Successfully established the connection with the friend! Hi, let\'s talk :)');
                 break;
         }
     };
@@ -352,6 +394,17 @@ main #localVideo {
         }
     }, false);
 
-    document.querySelector('#call').onclick = call;
+    // Friend has ended the call
+    signalingServer.addEventListener('message', function(event) {
+        var data = JSON.parse(event.data);
+
+        if (data.type == 'call-ended') {
+            console.log('Friend has ended the call');
+
+            hangUp();
+        }
+    }, false);
+
+    init();
     </script>
 </body>
