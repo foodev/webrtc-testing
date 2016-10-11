@@ -123,9 +123,12 @@ main #localVideo {
         iceServers: [{
             urls: 'stun:stun.stunprotocol.org:3478'
         }, {
-            urls: 'turn:numb.viagenie.ca',
-            username: 'webrtc@live.com',
-            credential: 'muazkh'
+            urls: [
+                'turn:74.125.140.127:19305?transport=udp',
+                'turn:74.125.140.127:443?transport=tcp'
+            ],
+            username: 'CNDY+b8FEgYsaLm0gUEYzc/s6OMT',
+            credential: 'tIa/HLcngA56/b4wUytljTXtpMg='
         }]
     });
 
