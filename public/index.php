@@ -229,18 +229,25 @@ main #localVideo {
         document.querySelector('#call').onclick = call;
     };
 
+    // Show local video stream to the user
     var showLocalMediaStream = function(localMediaStream) {
+        console.log('Show local video stream to the user.');
+
         document.querySelector('#localVideo').src = URL.createObjectURL(localMediaStream);
     };
 
+    // Request to use the webcam and microphone from the client
     var requestLocalMediaStream = function() {
-        // Request to use the webcam and microphone from the client
         return navigator.mediaDevices.getUserMedia({
             audio: true,
-            video: true/*{
+            video: {
                 facingMode: 'user'
-            }*/
-        })
+            }
+        }).then(function(localMediaStream) {
+            console.log('User granted access to webcam and microphone.');
+
+            return localMediaStream;
+        });
     };
 
     // Connection initialization starts
