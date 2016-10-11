@@ -30,6 +30,8 @@ let wss = new WebSocketServer({
 wss.on('connection', function(client) {
     let query = URL.parse(client.upgradeReq.url, true).query;
 
+    console.log('A new client registered:', client.upgradeReq.url);
+
     // Forward incoming message to specified friend
     // used for WebRTC videochat
     client.on('message', function(websocketData) {
