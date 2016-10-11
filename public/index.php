@@ -120,17 +120,13 @@ main #localVideo {
 
     // This is our main connection object
     var peerConnection = new RTCPeerConnection({
-        iceServers: [
-            {
-                urls: [
-                    'stun:stun.l.google.com:19302',
-                    'stun:stun1.l.google.com:19302',
-                    'stun:stun2.l.google.com:19302',
-                    'stun:stun3.l.google.com:19302',
-                    'stun:stun4.l.google.com:19302'
-                ]
-            }
-        ]
+        iceServers: [{
+            urls: 'stun:stun.stunprotocol.org:3478'
+        }, {
+            urls: 'turn:numb.viagenie.ca',
+            username: 'webrtc@live.com',
+            credential: 'muazkh'
+        }]
     });
 
     // This is our signaling server, used to exchange the offer and answer to establish the connection
