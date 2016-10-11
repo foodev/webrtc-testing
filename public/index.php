@@ -114,7 +114,6 @@ main #localVideo {
         </button>
     </template>
 
-    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
     'use strict';
 
